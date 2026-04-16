@@ -651,6 +651,8 @@ saveRDS(mnTS_mod_refit, "./outputs/mnTS_mod_refit.rds")
 ```
 
 ```{r}
+#| eval: false
+
 mnTS_mod_refit <- readRDS("./outputs/mnTS_mod_refit.rds")
 coef(mnTS_mod_refit)
 mnTS_mod_refit$AIC

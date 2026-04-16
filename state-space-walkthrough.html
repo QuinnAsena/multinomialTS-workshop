@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Quinn Asena, Jack Williams, and Tony Ives">
-<meta name="dcterms.date" content="2026-04-15">
+<meta name="dcterms.date" content="2026-04-16">
 
 <title>State-Space Methods for Testing Hypotheses About Environmental Drivers and Biotic Interactions in Community and Paleoecological Time Series</title>
 <style>
@@ -2548,7 +2548,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 15, 2026</p>
+      <p class="date">April 16, 2026</p>
     </div>
   </div>
   
@@ -2567,17 +2567,11 @@ window.Quarto = {
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">&quot;./install_workshop.R&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: multinomialTS</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Loading required package: pacman</code></pre>
-</div>
 </div>
 </section>
 <section id="some-prep" class="level2">
 <h2 class="anchored" data-anchor-id="some-prep">Some prep</h2>
-<p>Welcome to our workshop on how to use the <code>multinomialTS</code> package. First things first, let’s make sure you have all the necessary packages installed. Follow the instructions on the <a href="https://github.com/QuinnAsena/state-space-workhop-ESA/tree/main#welcome-to-the-multinomialts-workshop">README</a> and then try rendering this document. This may take a few minutes, so while that is running, I’m going to go through a few slides. If this document fails to render, something has gone wrong and one of our helpers/minions will help you sort it out.</p>
+<p>Welcome to our workshop on how to use the <code>multinomialTS</code> package. First things first, let’s make sure you have all the necessary packages installed. Follow the instructions on the <a href="https://github.com/QuinnAsena/state-space-workhop-ESA/tree/main#welcome-to-the-multinomialts-workshop">README</a> and then try rendering this document. This may take a few minutes, so while that is running, I’m going to go through a few slides. If this document fails to render, something has gone wrong and one of the workshop helpers will assist you.</p>
 </section>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
@@ -2609,125 +2603,124 @@ Figure 1: The process of handling the state variables, the covariates, and fitt
 <section id="data-from-story-lake" class="level2">
 <h2 class="anchored" data-anchor-id="data-from-story-lake">Data from Story Lake</h2>
 <p>Let’s get some data. We are going to use data that are the pollen counts from Story Lake, IN <span class="citation" data-cites="schlenker2024">(<a href="#ref-schlenker2024" role="doc-biblioref">Schlenker et al. 2024</a>)</span>, these data will be our state variables <span class="math inline">\(Y\)</span>. The data also contain charcoal counts, which will be our environmental covariate <span class="math inline">\(X\)</span>. The data are stored in the <a href="https://apps.neotomadb.org/explorer/">Neotoma database</a>.</p>
-<p>The following (folded) code block will download the data directly from the Neotoma API, do basic harmonisation of taxa, and some data wrangling to give us a wide dataset of state variables (<span class="math inline">\(Y\)</span>) and environmental covariates (<span class="math inline">\(X\)</span>). For this session, the data are already wangled and saved to the data directory, so the code block is set not to run (<code>#| eval: false</code>). We are not going to delve into the details of taxonomic resolution in this workshop, for details on using the <code>neotoma2</code> package check out the neotoma <a href="https://github.com/NeotomaDB/Current_Workshop/tree/main">GitHub</a>.</p>
+<p>The following (folded) code block will download the data directly from the Neotoma API, do basic harmonisation of taxa, and some data wrangling to give us a wide dataset of state variables (<span class="math inline">\(Y\)</span>) and environmental covariates (<span class="math inline">\(X\)</span>). For this session, the data are already wrangled and saved to the data directory, so the code block is set not to run (<code>#| eval: false</code>). We are not going to delve into the details of taxonomic resolution in this workshop, for details on using the <code>neotoma2</code> package check out the neotoma <a href="https://github.com/NeotomaDB/Current_Workshop/tree/main">GitHub</a>.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find site in neotoma</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>story_site <span class="ot">&lt;-</span> <span class="fu">get_sites</span>(<span class="at">sitename =</span> <span class="st">&quot;Story%&quot;</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Download the data from the site</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Downloading the data only needs to be done once</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>story_samples <span class="ot">&lt;-</span> story_site <span class="sc">|&gt;</span>  </span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_downloads</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">samples</span>()</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the raw data. Always keep an untouched copy of the raw data.</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(story_samples, <span class="st">&quot;./data/story_samples.rds&quot;</span>)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Read-in the raw samples, this avoids repeatedly downloading from the API</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>story_samples <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./data/story_samples.rds&quot;</span>)</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Some harmonisation of species, see Schlenker et al., 2024 in refs for details</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># First filter the data for pollen samples, then harmonise a few species to the genus-level</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>story_pollen_long <span class="ot">&lt;-</span> story_samples <span class="sc">|&gt;</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(elementtype <span class="sc">==</span> <span class="st">&quot;pollen&quot;</span>,</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>         units <span class="sc">==</span> <span class="st">&quot;NISP&quot;</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;Pinus*&quot;</span>), <span class="st">&quot;Pinus&quot;</span>),</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;Picea*&quot;</span>), <span class="st">&quot;Picea&quot;</span>),</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;Acer*&quot;</span>), <span class="st">&quot;Acer&quot;</span>),</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;Juglans*&quot;</span>), <span class="st">&quot;Juglans&quot;</span>),</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;Fraxinus*&quot;</span>), <span class="st">&quot;Fraxinus&quot;</span>)</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(siteid, sitename,</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>           sampleid, variablename, units, age,</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>           agetype, depth, datasetid,</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>           long, lat) <span class="sc">|&gt;</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value), <span class="at">.groups=</span><span class="st">&#39;keep&#39;</span>)</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Check names for any variables like spike, trace, Lycopodium, Microspheres...</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(story_pollen_long<span class="sc">$</span>variablename)</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(story_pollen_long, <span class="st">&quot;./data/story_pollen_long.rds&quot;</span>)</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Now let&#39;s turn to the charcoal</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co"># first filter data for charcoal counts</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>story_char <span class="ot">&lt;-</span> story_samples <span class="sc">|&gt;</span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(elementtype <span class="sc">==</span> <span class="st">&quot;&gt;125 µm&quot;</span>)</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co"># The following code pivots the data to a wide dataframe</span></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co"># then does a very crude calculation to convert charcoal counts to charcoal accumulation rate</span></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co"># for the purposes of this workshop the crude calculation will do</span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>story_char_wide <span class="ot">&lt;-</span> story_char <span class="sc">|&gt;</span> </span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="fu">c</span>(age, depth), <span class="at">names_from =</span> variablename, <span class="at">values_from =</span> value) <span class="sc">|&gt;</span> </span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lag_depth =</span> <span class="fu">abs</span>(<span class="fu">lag</span>(depth) <span class="sc">-</span> depth),</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">lag_age =</span> <span class="fu">abs</span>(<span class="fu">lag</span>(age) <span class="sc">-</span> age),</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">acc_rate =</span> lag_depth <span class="sc">/</span> lag_age,</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>  <span class="at">char_acc =</span> acc_rate <span class="sc">*</span> Charcoal) <span class="sc">|&gt;</span> </span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">ifelse</span>(<span class="fu">row_number</span>() <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(.), <span class="dv">0</span>, .))) <span class="sc">|&gt;</span> </span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(age, depth, char_acc)</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Let&#39;s save the wrangled data</span></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(story_char_wide, <span class="st">&quot;./data/story_char_wide.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find site in neotoma</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>story_site <span class="ot">&lt;-</span> <span class="fu">get_sites</span>(<span class="at">sitename =</span> <span class="st">&quot;Story%&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Download the data from the site</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Downloading the data only needs to be done once</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>story_samples <span class="ot">&lt;-</span> story_site <span class="sc">|&gt;</span>  </span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_downloads</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">samples</span>()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the raw data. Always keep an untouched copy of the raw data.</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(story_samples, <span class="st">&quot;./data/story_samples.rds&quot;</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Read-in the raw samples, this avoids repeatedly downloading from the API</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>story_samples <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./data/story_samples.rds&quot;</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Do species harmonisation, see Schlenker et al., 2024 in refs for details</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co"># First filter the data for pollen samples, then harmonise a few species to the genus-level</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>story_pollen_long <span class="ot">&lt;-</span> story_samples <span class="sc">|&gt;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(elementtype <span class="sc">==</span> <span class="st">&quot;pollen&quot;</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>         units <span class="sc">==</span> <span class="st">&quot;NISP&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;^Pinus&quot;</span>), <span class="st">&quot;Pinus&quot;</span>),</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;^Picea&quot;</span>), <span class="st">&quot;Picea&quot;</span>),</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;^Acer&quot;</span>), <span class="st">&quot;Acer&quot;</span>),</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;^Juglans&quot;</span>), <span class="st">&quot;Juglans&quot;</span>),</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">variablename =</span> <span class="fu">replace</span>(variablename, stringr<span class="sc">::</span><span class="fu">str_detect</span>(variablename, <span class="st">&quot;^Fraxinus&quot;</span>), <span class="st">&quot;Fraxinus&quot;</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(siteid, sitename,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>           sampleid, variablename, units, age,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>           agetype, depth, datasetid,</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>           long, lat) <span class="sc">|&gt;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value), <span class="at">.groups=</span><span class="st">&#39;keep&#39;</span>)</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Check names for any variables like spike, trace, Lycopodium, Microspheres...</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(story_pollen_long<span class="sc">$</span>variablename)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(story_pollen_long, <span class="st">&quot;./data/story_pollen_long.rds&quot;</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Now let&#39;s turn to the charcoal</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a><span class="co"># first filter data for charcoal counts</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>story_char <span class="ot">&lt;-</span> story_samples <span class="sc">|&gt;</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(elementtype <span class="sc">==</span> <span class="st">&quot;&gt;125 µm&quot;</span>)</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co"># The following code pivots the data to a wide dataframe</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="co"># then does a very crude calculation to convert charcoal counts to charcoal accumulation rate</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co"># for the purposes of this workshop the crude calculation will do</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>story_char_wide <span class="ot">&lt;-</span> story_char <span class="sc">|&gt;</span> </span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="fu">c</span>(age, depth), <span class="at">names_from =</span> variablename, <span class="at">values_from =</span> value) <span class="sc">|&gt;</span> </span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lag_depth =</span> <span class="fu">abs</span>(<span class="fu">lag</span>(depth) <span class="sc">-</span> depth),</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">lag_age =</span> <span class="fu">abs</span>(<span class="fu">lag</span>(age) <span class="sc">-</span> age),</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">acc_rate =</span> lag_depth <span class="sc">/</span> lag_age,</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  <span class="at">char_acc =</span> acc_rate <span class="sc">*</span> Charcoal) <span class="sc">|&gt;</span> </span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">ifelse</span>(<span class="fu">row_number</span>() <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(.), <span class="dv">0</span>, .))) <span class="sc">|&gt;</span> </span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(age, depth, char_acc)</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Let&#39;s save the wrangled data</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(story_char_wide, <span class="st">&quot;./data/story_char_wide.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Since the folded code block above has already been run, and the <span class="math inline">\(Y\)</span> and <span class="math inline">\(X\)</span> data saved to the data directory, we can read in the wrangled data directly.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read-in the wrangled data </span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in our X variables</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>story_char_wide <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./data/story_char_wide.rds&quot;</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in the long data for plotting</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>story_pollen_long <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./data/story_pollen_long.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read-in the wrangled data</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in our X variables</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>story_char_wide <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./data/story_char_wide.rds&quot;</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in the long data for plotting</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>story_pollen_long <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./data/story_pollen_long.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Currently the both the <span class="math inline">\(Y\)</span> and <span class="math inline">\(X\)</span> data contain age and depth columns. These columns will be excluded later but I like to keep some form of common ID column at this stage.</p>
+<p>Both the <span class="math inline">\(Y\)</span> and <span class="math inline">\(X\)</span> data currently contain age and depth columns. These columns will be excluded later but I like to keep some form of common ID column at this stage.</p>
 </section>
 <section id="handling-the-state-variables-y" class="level2">
 <h2 class="anchored" data-anchor-id="handling-the-state-variables-y">Handling the state variables <span class="math inline">\(Y\)</span></h2>
-<p>Let’s start handling our state variables <span class="math inline">\(Y\)</span>. It is not recommended to attempt to estimate coefficients for every species in the data simultaneously, so we are going to look at key taxa and groups. Let’s do some quick and dirty visualisation of the data, by plotting the top five most abundant species by their counts. It can be useful to explore more than the top five species by their counts of course, for example, there may be key species of ecological significance that occur in low abundances. We recommend methods like cluster analyses, and topic modelling as preliminary, or complimentary, analyses but we will not cover those methods in this workshop.</p>
+<p>Let’s start handling our state variables <span class="math inline">\(Y\)</span>. It is not recommended to attempt to estimate coefficients for every species in the data simultaneously, so we are going to look at key taxa and groups. Let’s do some initial exploratory visualisation of the data, by plotting the top five most abundant species by their counts. It can be useful to explore more than the top five species by their counts of course, for example, there may be key species of ecological significance that occur in low abundances. We recommend methods like cluster analyses, and topic modelling as preliminary, or complimentary, analyses but we will not cover those methods in this workshop.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># There are multiple ways of coding the data-wrangling</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># I&#39;m sticking with tidyverse for consistency but</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># I sometimes think BASE is more efficient!</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>story_pollen_top5_count <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(variablename) <span class="sc">|&gt;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_count =</span> <span class="fu">sum</span>(value)) <span class="sc">|&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(variablename, total_count) <span class="sc">|&gt;</span> </span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(total_count)) <span class="sc">|&gt;</span> </span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>story_top5 <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span> </span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(variablename <span class="sc">%in%</span> <span class="fu">c</span>(story_pollen_top5_count<span class="sc">$</span>variablename))</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>story_other <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>variablename <span class="sc">%in%</span> <span class="fu">c</span>(story_pollen_top5_count<span class="sc">$</span>variablename)) <span class="sc">|&gt;</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="st">&quot;other&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(variablename, age) <span class="sc">|&gt;</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value))</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>story_top5_res <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(story_top5, story_other) <span class="sc">|&gt;</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="fu">factor</span>(variablename, <span class="at">levels =</span>  <span class="fu">c</span>(</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;other&quot;</span>, <span class="fu">rev</span>(story_pollen_top5_count<span class="sc">$</span>variablename)</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  )))</span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(story_top5_res, <span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> value)) <span class="sc">+</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">colour =</span> <span class="st">&quot;grey90&quot;</span>) <span class="sc">+</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">xend =</span> age,</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> value), <span class="at">colour =</span> <span class="st">&quot;grey30&quot;</span>, <span class="at">linewidth =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reverse</span>(<span class="at">breaks =</span> scales<span class="sc">::</span><span class="fu">breaks_pretty</span>(<span class="at">n =</span> <span class="dv">6</span>)) <span class="sc">+</span></span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ylim(0, 0.5) +</span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Pollen counts&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Time (ybp)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variablename,</span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>),</span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># There are multiple ways of coding this data-wrangling step;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># using tidyverse here for consistency with the rest of the workshop</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>story_pollen_top5_count <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(variablename) <span class="sc">|&gt;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_count =</span> <span class="fu">sum</span>(value)) <span class="sc">|&gt;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(variablename, total_count) <span class="sc">|&gt;</span> </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(total_count)) <span class="sc">|&gt;</span> </span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>story_top5 <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span> </span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(variablename <span class="sc">%in%</span> <span class="fu">c</span>(story_pollen_top5_count<span class="sc">$</span>variablename))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>story_other <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>variablename <span class="sc">%in%</span> <span class="fu">c</span>(story_pollen_top5_count<span class="sc">$</span>variablename)) <span class="sc">|&gt;</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="st">&quot;other&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(variablename, age) <span class="sc">|&gt;</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value))</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>story_top5_res <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(story_top5, story_other) <span class="sc">|&gt;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="fu">factor</span>(variablename, <span class="at">levels =</span>  <span class="fu">c</span>(</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;other&quot;</span>, <span class="fu">rev</span>(story_pollen_top5_count<span class="sc">$</span>variablename)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  )))</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(story_top5_res, <span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> value)) <span class="sc">+</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">colour =</span> <span class="st">&quot;grey90&quot;</span>) <span class="sc">+</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">xend =</span> age,</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> value), <span class="at">colour =</span> <span class="st">&quot;grey30&quot;</span>, <span class="at">linewidth =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reverse</span>(<span class="at">breaks =</span> scales<span class="sc">::</span><span class="fu">breaks_pretty</span>(<span class="at">n =</span> <span class="dv">6</span>)) <span class="sc">+</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ylim(0, 0.5) +</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Pollen counts&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Time (ybp)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variablename,</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>),</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-topfive" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2746,56 +2739,56 @@ Figure 2: Pollen counts of the five species with the highest counts in the reco
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>hardwood_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Carya&quot;</span>, <span class="st">&quot;Ostrya/Carpinus&quot;</span>, <span class="st">&quot;Acer&quot;</span>, <span class="st">&quot;Juglans&quot;</span>, <span class="st">&quot;Fraxinus&quot;</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>target_taxa <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Ulmus&quot;</span>, <span class="st">&quot;Fagus grandifolia&quot;</span>, <span class="st">&quot;Quercus&quot;</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a group of hardwood taxa by summing counts</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>story_pollen_long_hardwood <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(variablename <span class="sc">%in%</span> hardwood_names) <span class="sc">|&gt;</span> </span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="st">&quot;hardwood&quot;</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(siteid, sitename,</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>           sampleid, variablename, units, age,</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>           agetype, depth, datasetid,</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>           long, lat) <span class="sc">|&gt;</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value), <span class="at">.groups=</span><span class="st">&#39;keep&#39;</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for target taxa</span></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>story_pollen_long_targets <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(variablename <span class="sc">%in%</span> target_taxa)</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum everything else into our reference group</span></span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>story_other_taxa <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>variablename <span class="sc">%in%</span> <span class="fu">c</span>(hardwood_names, target_taxa)) <span class="sc">|&gt;</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="st">&quot;other&quot;</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(siteid, sitename,</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>           sampleid, variablename, units, age,</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>           agetype, depth, datasetid,</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>           long, lat) <span class="sc">|&gt;</span></span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value), <span class="at">.groups=</span><span class="st">&#39;keep&#39;</span>)</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>state_variables <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(story_other_taxa, story_pollen_long_hardwood, story_pollen_long_targets) <span class="sc">|&gt;</span> </span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="fu">factor</span>(variablename, <span class="at">levels =</span>  <span class="fu">c</span>(<span class="st">&quot;other&quot;</span>, <span class="st">&quot;hardwood&quot;</span>, target_taxa)),</span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">value =</span> <span class="fu">replace_na</span>(value, <span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>hardwood_names <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Carya&quot;</span>, <span class="st">&quot;Ostrya/Carpinus&quot;</span>, <span class="st">&quot;Acer&quot;</span>, <span class="st">&quot;Juglans&quot;</span>, <span class="st">&quot;Fraxinus&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>target_taxa <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Ulmus&quot;</span>, <span class="st">&quot;Fagus grandifolia&quot;</span>, <span class="st">&quot;Quercus&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a group of hardwood taxa by summing counts</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>story_pollen_long_hardwood <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(variablename <span class="sc">%in%</span> hardwood_names) <span class="sc">|&gt;</span> </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="st">&quot;hardwood&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(siteid, sitename,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>           sampleid, variablename, units, age,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>           agetype, depth, datasetid,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>           long, lat) <span class="sc">|&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value), <span class="at">.groups=</span><span class="st">&#39;keep&#39;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for target taxa</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>story_pollen_long_targets <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(variablename <span class="sc">%in%</span> target_taxa)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum everything else into our reference group</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>story_other_taxa <span class="ot">&lt;-</span> story_pollen_long <span class="sc">|&gt;</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>variablename <span class="sc">%in%</span> <span class="fu">c</span>(hardwood_names, target_taxa)) <span class="sc">|&gt;</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="st">&quot;other&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(siteid, sitename,</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>           sampleid, variablename, units, age,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>           agetype, depth, datasetid,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>           long, lat) <span class="sc">|&gt;</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value =</span> <span class="fu">sum</span>(value), <span class="at">.groups=</span><span class="st">&#39;keep&#39;</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>state_variables <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(story_other_taxa, story_pollen_long_hardwood, story_pollen_long_targets) <span class="sc">|&gt;</span> </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">variablename =</span> <span class="fu">factor</span>(variablename, <span class="at">levels =</span>  <span class="fu">c</span>(<span class="st">&quot;other&quot;</span>, <span class="st">&quot;hardwood&quot;</span>, target_taxa)),</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">value =</span> <span class="fu">replace_na</span>(value, <span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Let’s check-out our new grouping:</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(state_variables, <span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> value)) <span class="sc">+</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">colour =</span> <span class="st">&quot;grey90&quot;</span>) <span class="sc">+</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">xend =</span> age,</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> value), <span class="at">colour =</span> <span class="st">&quot;grey30&quot;</span>, <span class="at">linewidth =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reverse</span>(<span class="at">breaks =</span> scales<span class="sc">::</span><span class="fu">breaks_pretty</span>(<span class="at">n =</span> <span class="dv">6</span>)) <span class="sc">+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ylim(0, 0.5) +</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Pollen counts&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Time (ybp)&quot;</span>) <span class="sc">+</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variablename,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>),</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(state_variables, <span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">y =</span> value)) <span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_area</span>(<span class="at">colour =</span> <span class="st">&quot;grey90&quot;</span>) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> age, <span class="at">xend =</span> age,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> value), <span class="at">colour =</span> <span class="st">&quot;grey30&quot;</span>, <span class="at">linewidth =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_reverse</span>(<span class="at">breaks =</span> scales<span class="sc">::</span><span class="fu">breaks_pretty</span>(<span class="at">n =</span> <span class="dv">6</span>)) <span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ylim(0, 0.5) +</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Pollen counts&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Time (ybp)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>variablename,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">nrow =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">10</span>),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-targettaxa" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -2810,24 +2803,24 @@ Figure 3: Pollen counts of the most common taxa with an additional group of ‘
 </div>
 </div>
 </div>
-<p>The data are 7931 years long, and attempting to predict ecological processes at an annual resolution from observations spaced by hundreds of years will be unreliable. So we need to chose a resolution for our predictions, i.e., we will estimate underlying ecological processes at a 50-year or 100-year temporal resolution. To do so, the data will be binned at a chosen resolution. The width of the bins is chosen according to the effect that binning will have state variables. Binning will aggregate some data (e.g., if two observations fall within the same bin they will be summed), and we want to keep as many observations as possible in independent bins. We want to interfere with the state variables as little as possible and maximise the number of observations over the time-series.</p>
-<p>A few summary checks can be useful here. We have done some data wrangling in long format, but the model requires wide data. We are going to pivot out data to wide and do some summaries. We are keeping the age and depth columns as identifiers to match with the charcoal data later.</p>
+<p>The data are 7931 years long, and attempting to predict ecological processes at an annual resolution from observations spaced by hundreds of years will be unreliable. So we need to choose a resolution for our predictions, i.e., we will estimate underlying ecological processes at a 50-year or 100-year temporal resolution. To do so, the data will be binned at a chosen resolution. The width of the bins is chosen according to the effect that binning will have state variables. Binning will aggregate some data (e.g., if two observations fall within the same bin they will be summed), and we want to keep as many observations as possible in independent bins. We want to interfere with the state variables as little as possible and maximise the number of observations over the time-series.</p>
+<p>A few summary checks can be useful here. We have done some data wrangling in long format, but the model requires wide data. We are going to pivot our data to wide and do some summaries. We are keeping the age and depth columns as identifiers to match with the charcoal data later.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pivot the data to wide format</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>state_variables_wide <span class="ot">&lt;-</span> state_variables <span class="sc">|&gt;</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="fu">c</span>(age, depth), <span class="at">names_from =</span> variablename, <span class="at">values_from =</span> value) <span class="sc">|&gt;</span> </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(age)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(state_variables_wide, <span class="st">&quot;./data/state_variables_wide.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pivot the data to wide format</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>state_variables_wide <span class="ot">&lt;-</span> state_variables <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="fu">c</span>(age, depth), <span class="at">names_from =</span> variablename, <span class="at">values_from =</span> value) <span class="sc">|&gt;</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(age)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(state_variables_wide, <span class="st">&quot;./data/state_variables_wide.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Time-span of the data divided by the number of observations</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">max</span>(state_variables_wide<span class="sc">$</span>age) <span class="sc">/</span> <span class="fu">nrow</span>(state_variables_wide)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Time-span of the data divided by the number of observations</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">max</span>(state_variables_wide<span class="sc">$</span>age) <span class="sc">/</span> <span class="fu">nrow</span>(state_variables_wide)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 83.48578</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Age differences between successive observations</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Age differences between successive observations</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> [1]  69.017  42.946  48.331  96.968  11.459  14.340  54.308  55.284 138.681
 [10]  66.118  48.695 143.230 103.015 186.753  58.537  54.550  52.888  50.954
@@ -2841,18 +2834,18 @@ Figure 3: Pollen counts of the most common taxa with an additional group of ‘
 [82]  66.205  65.555  71.999  71.922  86.020 153.328 103.854  76.139  71.061
 [91]  71.132 129.632 127.729 137.070</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The range of the age differences</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(<span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The range of the age differences</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(<span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1]  11.459 219.725</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the average of the age differences</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the average of the age differences</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 85.0778</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the standard deviation of the age differences</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sd</span>(<span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># the standard deviation of the age differences</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sd</span>(<span class="fu">diff</span>(state_variables_wide<span class="sc">$</span>age))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 38.36777</code></pre>
 </div>
@@ -2864,7 +2857,7 @@ Figure 3: Pollen counts of the most common taxa with an additional group of ‘
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Note: <span class="emoji" data-emoji="scream">😱</span>
+Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -2891,19 +2884,21 @@ Note
 </div>
 <p>Since we need to apply the same binning procedure to both the state variables and the covariate, I like to join both datasets. Charcoal was sampled to a greater depth than the pollen data, so we are going to clip the covariate to the extent of the state variables and join the two datasets by their common variable; age.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clip covariate data to the extent of the state variables</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Join the two by age so that we get a square matrix</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>story_join <span class="ot">&lt;-</span> story_char_wide <span class="sc">|&gt;</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(age <span class="sc">&lt;=</span> <span class="fu">max</span>(state_variables_wide<span class="sc">$</span>age)) <span class="sc">|&gt;</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(state_variables_wide)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Always double check dimensions before/after joining!</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co"># dim(story_join)</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># tail(story_join)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Clip covariate data to the extent of the state variables</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Join the two by age so that we get a square matrix</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>story_join <span class="ot">&lt;-</span> story_char_wide <span class="sc">|&gt;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(age <span class="sc">&lt;=</span> <span class="fu">max</span>(state_variables_wide<span class="sc">$</span>age)) <span class="sc">|&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(state_variables_wide)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Always double check dimensions before/after joining!</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(story_join)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 646   8</code></pre>
 </div>
-<p>Now we have all our data joined:</p>
+</div>
+<p>Now we have all our data joined. It is always worth doing quick checks like <code>head()</code>, <code>tail()</code>, and <code>dim()</code> to catch any coding mistakes:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(story_join, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(story_join, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 8
      age depth char_acc other hardwood `Fagus grandifolia` Quercus Ulmus
@@ -2919,10 +2914,7 @@ Note
  9 -53.7   8.5    20.5     NA       NA                  NA      NA    NA
 10 -52.6   9.5     8.26    NA       NA                  NA      NA    NA</code></pre>
 </div>
-</div>
-<p>I always do lots of quick checks like <code>head()</code>, <code>tail()</code>, <code>dim()</code> (and many more!) to make sure to catch any coding mistakes!</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(story_join, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(story_join, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 8
      age depth char_acc other hardwood `Fagus grandifolia` Quercus Ulmus
@@ -2941,29 +2933,29 @@ Note
 </div>
 <p>This all looks good, and we can now bin the data to an appropriate temporal resolution for fitting the model. Choosing a bin-width may take some trial and error, I’m going with a bin-width of 50 years.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This code chunks the data into bins and gives us a grouping variable &quot;bins&quot;</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>bin_width <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>bins <span class="ot">&lt;-</span> <span class="fu">cut</span>(story_join<span class="sc">$</span>age,</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(story_join<span class="sc">$</span>age),</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">to =</span> <span class="fu">max</span>(story_join<span class="sc">$</span>age <span class="sc">+</span> bin_width),</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> bin_width), <span class="at">include.lowest =</span> <span class="cn">TRUE</span>, <span class="at">labels =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This code chunks the data into bins and gives us a grouping variable &quot;bins&quot;</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>bin_width <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>bins <span class="ot">&lt;-</span> <span class="fu">cut</span>(story_join<span class="sc">$</span>age,</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(story_join<span class="sc">$</span>age),</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">to =</span> <span class="fu">max</span>(story_join<span class="sc">$</span>age <span class="sc">+</span> bin_width),</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> bin_width), <span class="at">include.lowest =</span> <span class="cn">TRUE</span>, <span class="at">labels =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We now apply the bins to our data. For most types of covariates we want the <em>average</em> value of the covariate in each bin. But for the pollen count data, we want the <em>sum</em>. This is because of the underlying multinomial distribution in the model.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pollen counts are summed per bin (required by the multinomial distribution); covariates are averaged</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>story_binned <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(<span class="at">bins =</span> bins, story_join) <span class="sc">|&gt;</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bins) <span class="sc">|&gt;</span> <span class="co"># Group the data by the bins so that we calculate per time bin</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">age =</span> <span class="fu">mean</span>(age, <span class="at">na.rm =</span> T), <span class="co"># the center of the bin</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">char_acc =</span> <span class="fu">mean</span>(char_acc, <span class="at">na.rm =</span> T), <span class="co"># mean charcoal accumulation rate per bin</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">other =</span> <span class="fu">sum</span>(other, <span class="at">na.rm =</span> T), <span class="co"># the sums of the count data</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">hardwood =</span> <span class="fu">sum</span>(hardwood, <span class="at">na.rm =</span> T),</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Fagus grandifolia</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(<span class="st">`</span><span class="at">Fagus grandifolia</span><span class="st">`</span>, <span class="at">na.rm =</span> T),</span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Ulmus =</span> <span class="fu">sum</span>(Ulmus, <span class="at">na.rm =</span> T),</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Quercus =</span> <span class="fu">sum</span>(Quercus, <span class="at">na.rm =</span> T)</span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(age))</span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Be aware that the gaps in the pollen data are now filled with 0&#39;s not NA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pollen counts are summed per bin (required by the multinomial distribution); covariates are averaged</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>story_binned <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(<span class="at">bins =</span> bins, story_join) <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(bins) <span class="sc">|&gt;</span> <span class="co"># Group the data by the bins so that we calculate per time bin</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">age =</span> <span class="fu">mean</span>(age, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="co"># the center of the bin</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">char_acc =</span> <span class="fu">mean</span>(char_acc, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="co"># mean charcoal accumulation rate per bin</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">other =</span> <span class="fu">sum</span>(other, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="co"># the sums of the count data</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">hardwood =</span> <span class="fu">sum</span>(hardwood, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Fagus grandifolia</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sum</span>(<span class="st">`</span><span class="at">Fagus grandifolia</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Ulmus =</span> <span class="fu">sum</span>(Ulmus, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Quercus =</span> <span class="fu">sum</span>(Quercus, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(age))</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Be aware that the gaps in the pollen data are now filled with 0&#39;s not NA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -2971,7 +2963,7 @@ Note
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-This is important <span class="emoji" data-emoji="100">💯</span>
+Important
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -2982,7 +2974,7 @@ This is important <span class="emoji" data-emoji="100">💯</span>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(story_binned, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(story_binned, <span class="at">n =</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 8
@@ -3005,18 +2997,18 @@ This is important <span class="emoji" data-emoji="100">💯</span>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>story_pollen_matrix <span class="ot">&lt;-</span> story_binned <span class="sc">|&gt;</span>  <span class="co"># Select taxa</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(other, hardwood, <span class="fu">all_of</span>(target_taxa)) <span class="sc">|&gt;</span> </span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">&quot;Fagus&quot;</span> <span class="ot">=</span> <span class="st">&quot;Fagus grandifolia&quot;</span>) <span class="sc">|&gt;</span> <span class="co"># renaming for to shorten name</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>()</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Replacing 0 with NA is not strictly necessary the way we use the data today</span></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="co"># But it is a good safety to avoid 0-count data where it zhould be no observation</span></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>story_pollen_matrix[<span class="fu">which</span>(<span class="fu">rowSums</span>(story_pollen_matrix) <span class="sc">==</span> <span class="dv">0</span>), ] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>story_char_matrix_scaled <span class="ot">&lt;-</span> story_binned <span class="sc">|&gt;</span> <span class="co"># select covariates</span></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(char_acc) <span class="sc">|&gt;</span> </span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale</span>() <span class="co"># Scale covariates</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>story_pollen_matrix <span class="ot">&lt;-</span> story_binned <span class="sc">|&gt;</span>  <span class="co"># Select taxa</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(other, hardwood, <span class="fu">all_of</span>(target_taxa)) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">&quot;Fagus&quot;</span> <span class="ot">=</span> <span class="st">&quot;Fagus grandifolia&quot;</span>) <span class="sc">|&gt;</span> <span class="co"># rename to shorten the column name</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>()</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Replacing 0 with NA is not strictly necessary for this workflow,</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="co"># but guards against treating gap rows as zero-count observations</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>story_pollen_matrix[<span class="fu">which</span>(<span class="fu">rowSums</span>(story_pollen_matrix) <span class="sc">==</span> <span class="dv">0</span>), ] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>story_char_matrix_scaled <span class="ot">&lt;-</span> story_binned <span class="sc">|&gt;</span> <span class="co"># select covariates</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(char_acc) <span class="sc">|&gt;</span> </span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.matrix</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale</span>() <span class="co"># Scale covariates</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -3048,7 +3040,7 @@ Tip
 </div>
 <section id="setting-up-parameters-for-mnglmm" class="level4">
 <h4 class="anchored" data-anchor-id="setting-up-parameters-for-mnglmm">Setting-up parameters for <code>mnGLMM()</code></h4>
-<p>Now, lets set up the parameters for <code>mnGLMM()</code>. We need:</p>
+<p>Now, let’s set up the parameters for <code>mnGLMM()</code>. We need:</p>
 <ul>
 <li>A vector that indicates the row indices where there are state variable observations: <code>sample_idx</code></li>
 <li>An integer number of covariates (+ 1 for <code>mnGLMM()</code>): <code>p</code></li>
@@ -3058,10 +3050,10 @@ Tip
 <li>A matrix of <span class="math inline">\(V\)</span> parameters to estimate: <code>V.fixed.glmm</code></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Row indices of bins that contain pollen observations (exclude empty/gap bins)</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>sample_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">rowSums</span>(story_pollen_matrix) <span class="sc">!=</span> <span class="dv">0</span>)</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure it works</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(story_pollen_matrix[sample_idx, ])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Row indices of bins that contain pollen observations (exclude empty/gap bins)</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>sample_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">rowSums</span>(story_pollen_matrix) <span class="sc">!=</span> <span class="dv">0</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure it works</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(story_pollen_matrix[sample_idx, ])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>     other hardwood Ulmus Fagus Quercus
 [1,]    43       39    37     3     172
@@ -3074,15 +3066,15 @@ Tip
 </div>
 <p>Set-up the remaining parameters:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up parameters</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ncol</span>(story_char_matrix_scaled) <span class="sc">+</span> <span class="dv">1</span> <span class="co"># Number of independent variables plus intercept</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">ncol</span>(story_pollen_matrix) <span class="co"># number of taxa</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>V.fixed.glmm <span class="ot">&lt;-</span> <span class="fu">diag</span>(n)</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(V.fixed.glmm) <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>V.fixed.glmm[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># reference taxa/group [1, 1] is set to 1</span></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>B.fixed.glmm <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span>,p),<span class="fu">rep</span>(<span class="cn">NA</span>, (n <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> p)), p, n) <span class="co"># reference taxa [,1] are set to 0</span></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>B.start.glmm <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span>,p),<span class="fu">rep</span>(.<span class="dv">01</span>, (n <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> p)), p, n) <span class="co"># reference taxa [,1] are set to 0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up parameters</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ncol</span>(story_char_matrix_scaled) <span class="sc">+</span> <span class="dv">1</span> <span class="co"># Number of independent variables plus intercept</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">ncol</span>(story_pollen_matrix) <span class="co"># number of taxa</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>V.fixed.glmm <span class="ot">&lt;-</span> <span class="fu">diag</span>(n)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="fu">diag</span>(V.fixed.glmm) <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>V.fixed.glmm[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="co"># reference taxa/group [1, 1] is set to 1</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>B.fixed.glmm <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span>,p),<span class="fu">rep</span>(<span class="cn">NA</span>, (n <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> p)), p, n) <span class="co"># reference taxa [,1] are set to 0</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>B.start.glmm <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span>,p),<span class="fu">rep</span>(.<span class="dv">01</span>, (n <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> p)), p, n) <span class="co"># reference taxa [,1] are set to 0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>These parameters are used as arguments to the <code>mnGLMM()</code> function. Check them out by printing them in your console. Each matrix needs to be the correct dimensions given the number of taxa and number of covariates. The position elements of each matrix reflect the species and/or the covariates, as we will see later in the output of the model.</p>
 <div class="callout callout-style-default callout-warning callout-titled">
@@ -3095,7 +3087,7 @@ Common error
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Defining the dimensions of each matrix is slightly different between <code>mnGLMM()</code> and <code>mnTS()</code>. The number of rows in the <span class="math inline">\(B\)</span> matrix in <code>mnGLMM()</code> is equal to the number of covariates + 1 (<code>p + 1</code>), and includes the intercept <span class="math inline">\(B0\)</span>. <code>mnTS()</code> has two arguments one for the intercept; <span class="math inline">\(B0\)</span>, <em>and</em> a separate one for the covariates; <span class="math inline">\(B\)</span>.</p>
+<p>Defining the dimensions of each matrix is slightly different between <code>mnGLMM()</code> and <code>mnTS()</code>. The number of rows in the <span class="math inline">\(B\)</span> matrix in <code>mnGLMM()</code> is equal to the number of covariates + 1 (<code>p + 1</code>), and includes the intercept <span class="math inline">\(B0\)</span>. <code>mnTS()</code> has two arguments: one for the intercept; <span class="math inline">\(B0\)</span>, <em>and</em> a separate one for the covariates; <span class="math inline">\(B\)</span>.</p>
 </div>
 </div>
 </section>
@@ -3103,31 +3095,28 @@ Common error
 <h4 class="anchored" data-anchor-id="fitting-mnglmm">Fitting <code>mnGLMM()</code></h4>
 <p>Remember that <code>mnGLMM()</code> does not handle gaps in the data and only fits complete <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> matrices. We have created a variable for our observation indices (<code>sample_idx</code>), so for <code>mnGLMM()</code> we will index the matrices by this variable: e.g., <code>story_pollen_matrix[sample_idx, ]</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># fit glmm</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>glmm_mod <span class="ot">&lt;-</span> <span class="fu">mnGLMM</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">X =</span> story_char_matrix_scaled[sample_idx, ,<span class="at">drop =</span> F],</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B.start =</span> B.start.glmm,</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B.fixed =</span> B.fixed.glmm,</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">V.fixed =</span> V.fixed.glmm)</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 5.876971 secs</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(glmm_mod, <span class="st">&quot;./outputs/glmm_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># fit glmm</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>glmm_mod <span class="ot">&lt;-</span> <span class="fu">mnGLMM</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">X =</span> story_char_matrix_scaled[sample_idx, , <span class="at">drop =</span> <span class="cn">FALSE</span>],</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B.start =</span> B.start.glmm,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">B.fixed =</span> B.fixed.glmm,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">V.fixed =</span> V.fixed.glmm)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(glmm_mod, <span class="st">&quot;./outputs/glmm_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>glmm_mod <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/glmm_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>glmm_mod <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/glmm_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>The outputs of <code>mnGLMM()</code> can be examined with the <code>summary(glmm_mod)</code> and <code>coef(glmm_mod)</code> functions. We are going to skip this for now because the output of <code>mnGLMM()</code> is similar to <code>mnTS()</code>, only, without the <span class="math inline">\(C\)</span> matrix. For this demonstration we will look at the output of <code>mnTS()</code> as the same concepts apply.</p>
 </section>
 <section id="setting-up-parameters-for-mnts" class="level4">
 <h4 class="anchored" data-anchor-id="setting-up-parameters-for-mnts">Setting-up parameters for <code>mnTS()</code></h4>
-<p>Now, we have reasonable starting values from <code>mnGLMM()</code> lets set up the main state-space model parameters for <code>mnTS()</code>. <code>mnTS()</code> needs:</p>
+<p>Now we have reasonable starting values from <code>mnGLMM()</code>, let’s set up the main state-space model parameters for <code>mnTS()</code>. <code>mnTS()</code> needs:</p>
 <ul>
 <li>row indices as before: <code>sample_idx</code></li>
 <li>the number of covariates: <code>p</code></li>
@@ -3149,36 +3138,35 @@ Common error
 </ul>
 <p>We are using the output from <code>mnGLMM()</code> as starting values for the matrices <span class="math inline">\(B0\)</span>, <span class="math inline">\(B\)</span>, and <span class="math inline">\(V\)</span>. <code>mnGLMM()</code> does not provide estimates for <span class="math inline">\(C\)</span>, so we handle <span class="math inline">\(C\)</span> a little differently and we input values close to zero for each parameter estimated and let <code>mnTS()</code> do the rest.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># B.start</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>B0.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>B[<span class="dv">1</span>, , drop <span class="ot">=</span> F] <span class="co"># The first row is the Intercept</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>B.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>B[<span class="dv">2</span>, , drop <span class="ot">=</span> F] <span class="co"># Take care here!</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The second row on are the covariates, more covariates, more rows. Here is only one covariate</span></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="co"># B.start.mnTS &lt;- glmm_mod$B[2:3, , drop = F] # For 2 covariates</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>sigma.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>sigma</span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>V.fixed.mnTS <span class="ot">=</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, n, n) <span class="co"># Covariance matrix of environmental variation in process eq</span></span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>V.fixed.mnTS[<span class="dv">1</span>] <span class="ot">=</span> <span class="dv">1</span></span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>V.start.mnTS <span class="ot">=</span> V.fixed.mnTS</span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>V.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>V</span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>B.fixed.mnTS <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, p<span class="dv">-1</span>, n)</span>
-<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>B.fixed.mnTS[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>B0.fixed.mnTS <span class="ot">=</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">rep</span>(<span class="cn">NA</span>, n <span class="sc">-</span> <span class="dv">1</span>)), <span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">ncol =</span> n)</span>
-<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up C without interactions</span></span>
-<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagonal elements = intrinsic population dynamics (self-regulation), always estimated (NA)</span></span>
-<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Off-diagonal elements = species interactions; 0 = not estimated, NA = estimated</span></span>
-<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>C.start.mnTS <span class="ot">=</span> .<span class="dv">5</span> <span class="sc">*</span> <span class="fu">diag</span>(n)</span>
-<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>C.fixed.mnTS <span class="ot">&lt;-</span> C.start.mnTS</span>
-<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>C.fixed.mnTS[C.fixed.mnTS <span class="sc">!=</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up C with interactions between Fagus and Quercus</span></span>
-<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>C.start.int.mnTS <span class="ot">=</span> .<span class="dv">5</span> <span class="sc">*</span> <span class="fu">diag</span>(n)</span>
-<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>C.start.int.mnTS[<span class="dv">5</span>, <span class="dv">4</span>] <span class="ot">&lt;-</span> .<span class="dv">001</span> <span class="co"># effect of Fagus (col 4) on Quercus (row 5)</span></span>
-<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>C.start.int.mnTS[<span class="dv">4</span>, <span class="dv">5</span>] <span class="ot">&lt;-</span> .<span class="dv">001</span> <span class="co"># effect of Quercus (col 5) on Fagus (row 4)</span></span>
-<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>C.fixed.int.mnTS <span class="ot">&lt;-</span> C.start.int.mnTS</span>
-<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>C.fixed.int.mnTS[C.fixed.int.mnTS <span class="sc">!=</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># B.start</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>B0.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>B[<span class="dv">1</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>] <span class="co"># The first row is the intercept</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>B.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>B[<span class="dv">2</span>, , drop <span class="ot">=</span> <span class="cn">FALSE</span>] <span class="co"># Take care here!</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Rows 2+ are the covariates; add more rows for additional covariates</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="co"># B.start.mnTS &lt;- glmm_mod$B[2:3, , drop = FALSE] # For 2 covariates</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>sigma.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>sigma</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>V.fixed.mnTS <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, n, n) <span class="co"># Covariance matrix of environmental variation in process eq</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>V.fixed.mnTS[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>V.start.mnTS <span class="ot">&lt;-</span> glmm_mod<span class="sc">$</span>V</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>B.fixed.mnTS <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, p<span class="dv">-1</span>, n)</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>B.fixed.mnTS[,<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>B0.fixed.mnTS <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">rep</span>(<span class="cn">NA</span>, n <span class="sc">-</span> <span class="dv">1</span>)), <span class="at">nrow =</span> <span class="dv">1</span>, <span class="at">ncol =</span> n)</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up C without interactions</span></span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Diagonal elements = intrinsic population dynamics (self-regulation), always estimated (NA)</span></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Off-diagonal elements = species interactions; 0 = not estimated, NA = estimated</span></span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>C.start.mnTS <span class="ot">&lt;-</span> .<span class="dv">5</span> <span class="sc">*</span> <span class="fu">diag</span>(n)</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>C.fixed.mnTS <span class="ot">&lt;-</span> C.start.mnTS</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>C.fixed.mnTS[C.fixed.mnTS <span class="sc">!=</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up C with interactions between Fagus and Quercus</span></span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>C.start.int.mnTS <span class="ot">&lt;-</span> .<span class="dv">5</span> <span class="sc">*</span> <span class="fu">diag</span>(n)</span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>C.start.int.mnTS[<span class="dv">5</span>, <span class="dv">4</span>] <span class="ot">&lt;-</span> .<span class="dv">001</span> <span class="co"># effect of Fagus (col 4) on Quercus (row 5)</span></span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>C.start.int.mnTS[<span class="dv">4</span>, <span class="dv">5</span>] <span class="ot">&lt;-</span> .<span class="dv">001</span> <span class="co"># effect of Quercus (col 5) on Fagus (row 4)</span></span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>C.fixed.int.mnTS <span class="ot">&lt;-</span> C.start.int.mnTS</span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a>C.fixed.int.mnTS[C.fixed.int.mnTS <span class="sc">!=</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="fitting-mnts" class="level4">
@@ -3193,45 +3181,45 @@ Common error
 <div class="tab-content">
 <div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>mnTS_mod <span class="ot">&lt;-</span> <span class="fu">mnTS</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">X =</span> story_char_matrix_scaled, <span class="at">Tsample =</span> sample_idx,</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">B0.start =</span> B0.start.mnTS, <span class="at">B0.fixed =</span> B0.fixed.mnTS,</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">B.start =</span> B.start.mnTS, <span class="at">B.fixed =</span> B.fixed.mnTS,</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">C.start =</span> C.start.mnTS, <span class="at">C.fixed =</span> C.fixed.mnTS,</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">V.start =</span> V.start.mnTS, <span class="at">V.fixed =</span> V.fixed.mnTS,</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dispersion.fixed =</span> <span class="dv">1</span>, <span class="at">maxit.optim =</span> <span class="fl">1e+6</span>)</span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="co"># maxit.optim is the max number of iterations the optimiser will complete before stopping.</span></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="co"># increase maxit.optim if the model needs a lot of time to fit.</span></span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span>
-<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mnTS_mod, <span class="st">&quot;./outputs/mnTS_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>mnTS_mod <span class="ot">&lt;-</span> <span class="fu">mnTS</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">X =</span> story_char_matrix_scaled, <span class="at">Tsample =</span> sample_idx,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">B0.start =</span> B0.start.mnTS, <span class="at">B0.fixed =</span> B0.fixed.mnTS,</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">B.start =</span> B.start.mnTS, <span class="at">B.fixed =</span> B.fixed.mnTS,</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">C.start =</span> C.start.mnTS, <span class="at">C.fixed =</span> C.fixed.mnTS,</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>                 <span class="at">V.start =</span> V.start.mnTS, <span class="at">V.fixed =</span> V.fixed.mnTS,</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dispersion.fixed =</span> <span class="dv">1</span>, <span class="at">maxit.optim =</span> <span class="fl">1e+6</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="co"># maxit.optim is the max number of iterations the optimiser will complete before stopping.</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a><span class="co"># increase maxit.optim if the model needs a lot of time to fit.</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mnTS_mod, <span class="st">&quot;./outputs/mnTS_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/mnTS_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/mnTS_mod.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
 <div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>mnTS_mod_int <span class="ot">&lt;-</span> <span class="fu">mnTS</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">X =</span> story_char_matrix_scaled, <span class="at">Tsample =</span> sample_idx,</span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">B0.start =</span> mnTS_mod<span class="sc">$</span>B0, <span class="at">B0.fixed =</span> B0.fixed.mnTS,</span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">B.start =</span> mnTS_mod<span class="sc">$</span>B, <span class="at">B.fixed =</span> B.fixed.mnTS,</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>                     <span class="at">C.start =</span> mnTS_mod<span class="sc">$</span>C, <span class="at">C.fixed =</span> C.fixed.int.mnTS,</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">V.start =</span> mnTS_mod<span class="sc">$</span>V, <span class="at">V.fixed =</span> V.fixed.mnTS,</span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>                     <span class="at">dispersion.fixed =</span> <span class="dv">1</span>, <span class="at">maxit.optim =</span> <span class="fl">1e+6</span>)</span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() </span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mnTS_mod_int, <span class="st">&quot;./outputs/mnTS_mod_int.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>mnTS_mod_int <span class="ot">&lt;-</span> <span class="fu">mnTS</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">X =</span> story_char_matrix_scaled, <span class="at">Tsample =</span> sample_idx,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">B0.start =</span> mnTS_mod<span class="sc">$</span>B0, <span class="at">B0.fixed =</span> B0.fixed.mnTS,</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">B.start =</span> mnTS_mod<span class="sc">$</span>B, <span class="at">B.fixed =</span> B.fixed.mnTS,</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>                     <span class="at">C.start =</span> mnTS_mod<span class="sc">$</span>C, <span class="at">C.fixed =</span> C.fixed.int.mnTS,</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>                     <span class="at">V.start =</span> mnTS_mod<span class="sc">$</span>V, <span class="at">V.fixed =</span> V.fixed.mnTS,</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>                     <span class="at">dispersion.fixed =</span> <span class="dv">1</span>, <span class="at">maxit.optim =</span> <span class="fl">1e+6</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() </span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mnTS_mod_int, <span class="st">&quot;./outputs/mnTS_mod_int.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_int <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/mnTS_mod_int.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_int <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/mnTS_mod_int.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </div>
@@ -3256,44 +3244,44 @@ Getting a good fit
 <h3 class="anchored" data-anchor-id="interpreting-outputs">Interpreting outputs</h3>
 <p>The <code>coef()</code> and <code>summary()</code> functions will show the model outputs. Let’s check out the coefficients of interaction model:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(mnTS_mod_int)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(mnTS_mod_int)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                           Coef.         se         t            P
-hardwood              0.63887009 0.32797397  1.947929 5.142343e-02
-Ulmus                -0.37197596 0.22052878 -1.686746 9.165227e-02
-Fagus                -0.75298508 0.22384055 -3.363935 7.683961e-04
-Quercus               1.34744142 0.12097745 11.137955 8.197974e-29
-sp.other.other        0.88499656 0.01245596 71.050060 0.000000e+00
-sp.hardwood.hardwood  0.96194926 0.01863543 51.619364 0.000000e+00
-sp.Ulmus.Ulmus        0.94033943 0.02321432 40.506872 0.000000e+00
-sp.Fagus.Fagus        0.80315620 0.04658110 17.242103 1.282831e-66
-sp.Quercus.Fagus      0.06704494 0.01614222  4.153391 3.275845e-05
-sp.Fagus.Quercus     -0.09762005 0.05031349 -1.940236 5.235102e-02
-sp.Quercus.Quercus    0.99209581 0.01908702 51.977507 0.000000e+00
-char_acc.hardwood    -0.15091936 0.02598970 -5.806892 6.364308e-09
-char_acc.Ulmus       -0.14161025 0.04857906 -2.915047 3.556349e-03
-char_acc.Fagus       -0.21567537 0.04962459 -4.346139 1.385548e-05
-char_acc.Quercus     -0.17417682 0.02257133 -7.716727 1.193548e-14</code></pre>
+hardwood              0.70701092 0.36912747  1.915357 5.544698e-02
+Ulmus                -0.47383592 0.32512039 -1.457417 1.450014e-01
+Fagus                -0.82708529 0.34388320 -2.405134 1.616652e-02
+Quercus               1.42508734 0.31361083  4.544127 5.516348e-06
+sp.other.other        0.88903728 0.01737083 51.179889 0.000000e+00
+sp.hardwood.hardwood  0.96247827 0.01603352 60.029117 0.000000e+00
+sp.Ulmus.Ulmus        0.94801846 0.02426052 39.076586 0.000000e+00
+sp.Fagus.Fagus        0.80038451 0.05099097 15.696592 1.595888e-55
+sp.Quercus.Fagus      0.06547106 0.01264887  5.176042 2.266429e-07
+sp.Fagus.Quercus     -0.10205881 0.04126391 -2.473319 1.338645e-02
+sp.Quercus.Quercus    0.99635812 0.01833404 54.344718 0.000000e+00
+char_acc.hardwood    -0.15462592 0.02565652 -6.026769 1.672696e-09
+char_acc.Ulmus       -0.14556882 0.04356441 -3.341462 8.333850e-04
+char_acc.Fagus       -0.21981877 0.05499133 -3.997335 6.405959e-05
+char_acc.Quercus     -0.17458198 0.02669360 -6.540219 6.142871e-11</code></pre>
 </div>
 </div>
 <p>Lift an individual matrix:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_int<span class="sc">$</span>C</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_int<span class="sc">$</span>C</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>             other  hardwood     Ulmus      Fagus     Quercus
-other    0.8849966 0.0000000 0.0000000 0.00000000  0.00000000
-hardwood 0.0000000 0.9619493 0.0000000 0.00000000  0.00000000
-Ulmus    0.0000000 0.0000000 0.9403394 0.00000000  0.00000000
-Fagus    0.0000000 0.0000000 0.0000000 0.80315620 -0.09762005
-Quercus  0.0000000 0.0000000 0.0000000 0.06704494  0.99209581</code></pre>
+<pre><code>             other  hardwood     Ulmus      Fagus    Quercus
+other    0.8890373 0.0000000 0.0000000 0.00000000  0.0000000
+hardwood 0.0000000 0.9624783 0.0000000 0.00000000  0.0000000
+Ulmus    0.0000000 0.0000000 0.9480185 0.00000000  0.0000000
+Fagus    0.0000000 0.0000000 0.0000000 0.80038451 -0.1020588
+Quercus  0.0000000 0.0000000 0.0000000 0.06547106  0.9963581</code></pre>
 </div>
 </div>
 <ul>
-<li>rows = change in abundance</li>
-<li>columns = abundance</li>
+<li>rows = target taxon (the taxon whose abundance changes)</li>
+<li>columns = source taxon (the taxon exerting the effect)</li>
 <li>Autocorrelation on the diagonal</li>
 </ul>
-<p>Quercus-Fagus 0.067 means that <em>change in abundance</em> of <em>Quercus</em> affects the abundance of <em>Fagus</em>.</p>
+<p>A positive value at row <em>Quercus</em>, column <em>Fagus</em> means the abundance of <em>Fagus</em> positively affects the change in abundance of <em>Quercus</em>.</p>
 <p>We won’t delve into comparing individual coefficient values between the two models here. Doing so is important to interpreting the ecological meaning of the data, and requires strong ecological knowledge of the study system. Although that is one of the most interesting parts, it is a little beyond what we can fit into a workshop around how to fit the model!</p>
 </section>
 <section id="re-fitting-if-necessary" class="level3">
@@ -3301,54 +3289,40 @@ Quercus  0.0000000 0.0000000 0.0000000 0.06704494  0.99209581</code></pre>
 <p>We are aiming to find the best optima possible from the model. Because this may not happen in the first attempt with initial conditions provided by <code>mnGLMM()</code>, we can refit the model with starting conditions from the output of <code>mnTS()</code>. This may initially sound like cheating, running a circular model, but remember the input values are only starting conditions. Starting with values that are closer to the ‘true’ optima is likely to provide a better and faster fit.</p>
 <p>As an example, let’s refit the first model:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>mnTS_mod_refit <span class="ot">&lt;-</span> <span class="fu">mnTS</span>(<span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">X =</span> story_char_matrix_scaled, <span class="at">Tsample =</span> sample_idx,</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">B0.start =</span> mnTS_mod<span class="sc">$</span>B0, <span class="at">B0.fixed =</span> B0.fixed.mnTS,</span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>                           <span class="at">B.start =</span> mnTS_mod<span class="sc">$</span>B, <span class="at">B.fixed =</span> B.fixed.mnTS,</span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>                           <span class="at">C.start =</span> mnTS_mod<span class="sc">$</span>C, <span class="at">C.fixed =</span> C.fixed.mnTS,</span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>                           <span class="at">V.start =</span> mnTS_mod<span class="sc">$</span>V, <span class="at">V.fixed =</span> V.fixed.mnTS,</span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>                           <span class="at">dispersion.fixed =</span> <span class="dv">1</span>, <span class="at">maxit.optim =</span> <span class="fl">1e+6</span>)</span>
-<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>() </span>
-<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Time difference of 17.90723 secs</code></pre>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>start_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>mnTS_mod_refit <span class="ot">&lt;-</span> <span class="fu">mnTS</span>(</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y =</span> story_pollen_matrix[sample_idx, ],</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> story_char_matrix_scaled, <span class="at">Tsample =</span> sample_idx,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">B0.start =</span> mnTS_mod<span class="sc">$</span>B0, <span class="at">B0.fixed =</span> B0.fixed.mnTS,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">B.start =</span> mnTS_mod<span class="sc">$</span>B, <span class="at">B.fixed =</span> B.fixed.mnTS,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">C.start =</span> mnTS_mod<span class="sc">$</span>C, <span class="at">C.fixed =</span> C.fixed.mnTS,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">V.start =</span> mnTS_mod<span class="sc">$</span>V, <span class="at">V.fixed =</span> V.fixed.mnTS,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">dispersion.fixed =</span> <span class="dv">1</span>, <span class="at">maxit.optim =</span> <span class="fl">1e+6</span>)</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>end_time <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>end_time <span class="sc">-</span> start_time</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(mnTS_mod_refit, <span class="st">&quot;./outputs/mnTS_mod_refit.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(mnTS_mod_refit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>                           Coef.          se          t             P
-hardwood              0.41503922 0.131080941   3.166282  1.544010e-03
-Ulmus                -1.06470731 0.279428992  -3.810296  1.388002e-04
-Fagus                -0.50048082 0.329634498  -1.518290  1.289413e-01
-Quercus               1.11984313 0.146569087   7.640377  2.165861e-14
-sp.other.other        0.81270180 0.062826521  12.935649  2.832231e-38
-sp.hardwood.hardwood  0.42428369 0.302047525   1.404692  1.601129e-01
-sp.Ulmus.Ulmus        0.99736624 0.004110289 242.651127  0.000000e+00
-sp.Fagus.Fagus        0.92142806 0.031331777  29.408739 4.245965e-190
-sp.Quercus.Quercus    0.86732121 0.060236716  14.398547  5.284249e-47
-char_acc.hardwood    -0.08186332 0.046157547  -1.773563  7.613547e-02
-char_acc.Ulmus       -0.12990001 0.056900640  -2.282927  2.243466e-02
-char_acc.Fagus       -0.11391589 0.074275103  -1.533702  1.251029e-01
-char_acc.Quercus     -0.09090358 0.044706069  -2.033361  4.201605e-02</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_refit<span class="sc">$</span>AIC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] -1391.369</code></pre>
-</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_refit <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;./outputs/mnTS_mod_refit.rds&quot;</span>)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(mnTS_mod_refit)</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>mnTS_mod_refit<span class="sc">$</span>AIC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Looks like not much changed, so our original fit was good <span class="emoji" data-emoji="sunglasses">😎</span>.</p>
 </section>
 <section id="bootstrapping" class="level3">
 <h3 class="anchored" data-anchor-id="bootstrapping">Bootstrapping</h3>
-<p>We do not advocate for a reliance on P-values for interpreting results. Issues with P-values are well documented <span class="citation" data-cites="anderson2000">(<a href="#ref-anderson2000" role="doc-biblioref">Anderson, Burnham, and Thompson 2000</a>)</span>; however, <code>multinomialTS()</code> offers two methods of calculating P-values. The <code>coef()</code> function shows P-values calculated from standard errors from Wald approximation. In simulation tests, we found the Wald Approximation could lead to inflated type-1 errors, so we wrote a bootstrapping function as a more robust alternative. Bootstrapping can take a very long time (depending on the data and the number of bootsraps), so we won’t run the bootstrapping function during the workshop. The code for bootstrapping the model is:</p>
+<p>We do not advocate for a reliance on P-values for interpreting results. Issues with P-values are well documented <span class="citation" data-cites="anderson2000">(<a href="#ref-anderson2000" role="doc-biblioref">Anderson, Burnham, and Thompson 2000</a>)</span>; however, <code>multinomialTS()</code> offers two methods of calculating P-values. The <code>coef()</code> function shows P-values calculated from standard errors from Wald approximation. In simulation tests, we found the Wald Approximation could lead to inflated type-1 errors, so we wrote a bootstrapping function as a more robust alternative. Bootstrapping can take a very long time (depending on the data and the number of bootstraps), so we won’t run the bootstrapping function during the workshop. The code for bootstrapping the model is:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_boot <span class="ot">&lt;-</span> <span class="fu">boot</span>(mnTS_mod, <span class="at">reps =</span> <span class="dv">10000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>mnTS_mod_boot <span class="ot">&lt;-</span> multinomialTS<span class="sc">::</span><span class="fu">boot</span>(mnTS_mod, <span class="at">reps =</span> <span class="dv">10000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
 <section id="hypothesis-testing" class="level2">
 <h2 class="anchored" data-anchor-id="hypothesis-testing">Hypothesis testing</h2>
-<p>There may be circumstances where coefficients change substantially by fitting the model in alternative ways, e.g., with or without interactions, of different covariates. We can use the post-hoc statistical tests like AIC and likelihood ratio tests to give some statistical support to one model or another. However, in the context of palaeoecological data at least, there is no known correct answer. We can only use the results to lend statistical support to multiple potential hypotheses. Palaeo-data lacks experimental manipulation and direct observation, so we suggest setting up multiple working hypotheses <span class="citation" data-cites="chamberlin1897">(i.e., <a href="#ref-chamberlin1897" role="doc-biblioref">Chamberlin 1897</a>)</span>, testing components of those hypotheses by fitting <code>multinomialTS</code> under different conditions, and finally assessing the statistical support lent to each hypotheses within the context of ecological knowledge.</p>
+<p>There may be circumstances where coefficients change substantially by fitting the model in alternative ways, e.g., with or without interactions, or different covariates. We can use the post-hoc statistical tests like AIC and likelihood ratio tests to give some statistical support to one model or another. However, in the context of palaeoecological data at least, there is no known correct answer. We can only use the results to lend statistical support to multiple potential hypotheses. Palaeo-data lacks experimental manipulation and direct observation, so we suggest setting up multiple working hypotheses <span class="citation" data-cites="chamberlin1897">(i.e., <a href="#ref-chamberlin1897" role="doc-biblioref">Chamberlin 1897</a>)</span>, testing components of those hypotheses by fitting <code>multinomialTS</code> under different conditions, and finally assessing the statistical support lent to each hypotheses within the context of ecological knowledge.</p>
 </section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
